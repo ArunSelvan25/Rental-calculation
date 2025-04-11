@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <​meta charset="UTF-8">
+  <title>Customer Price Preview</title>
+  <​meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <​style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #f3f3f3;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      flex-direction: column;
+    }
+
+    form, .preview-box {
+      background-color: #fff;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    input, textarea, .submit-btn {
+      font-size: 16px;
+    }
+
+    .download-btn {
+      font-size: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+      }
+
+      form, .preview-box {
+        width: calc(33.333% - 20px);
+      }
+    }
+
+    h2, h3 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .extras-container {
+      margin-bottom: 12px;
+    }
+
+    .extras-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .extras-item input {
+      flex: 1;
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: red;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .add-extra-btn {
+      background: none;
+      border: none;
+      color: blue;
+      cursor: pointer;
+      margin-top: -10px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background-color: #000;
+      color: #fff;
+      padding: 10px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .download-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #007bff;
+    }
+
+    .download-btn:hover {
+      color: #0056b3;
+    }
+
+    .preview-box {
+      position: relative;
+      font-size: 14px;
+      color: #333;
+      overflow-x: auto;
+    }
+
+    .preview-box p {
+      margin: 6px 0;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      color: green;
+      font-size: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f9f9f9;
+    }
+
+    .placeholder-list {
+      font-size: 13px;
+      margin-top: 20px;
+    }
+
+    .placeholder-list code {
+      background-color: #f1f1f1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .placeholder-list ul {
+      padding-left: 16px;
+    }
+
+    .placeholder-list li {
+      margin-bottom: 4px;
+    }
+
+    .preview-box table td:first-child {
+        white-space: nowrap;
+        width: 150px;
+    }
+  <​/style>
+  <​script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><​/script>
+</head>
+
+<body>
+
+<div class="container">
+  <!-- Template Form -->
+  <form id="templateForm">
+    <h2>Template Details</h2>
+    <input name="contactName" value="John Doe" placeholder="Contact Name">
+    <input name="contactNumber" value="9876543210" placeholder="Contact Number">
+    <input name="greetingMessage" value="Dear {{name}}," placeholder="Greeting Message">
+    <textarea name="body" rows="2" placeholder="Body">Thanks for choosing us! Your rent is {{price}}.</textarea>
+    <textarea name="notes" rows="2" placeholder="Notes">Pay before due date. Contact {{contact_name}} ({{contact_number}}) for queries.</textarea>
+    <textarea name="thankyou_notes" rows="2" placeholder="Thank you note">Thank you for your business, {{name}}!</textarea>
+  </form>
+
+  <!-- Customer Form -->
+  <form id="customerForm">
+    <h2>Customer Details</h2>
+    <input name="name" placeholder="Customer Name" required>
+    <input name="number" placeholder="Customer Number" required>
+    <input name="price" type="number" placeholder="Rental Price" required>
+
+    <div>
+      <label><strong>Extras</strong></label>
+      <div id="extrasContainer" class="extras-container"></div>
+      <button type="button" class="add-extra-btn" onclick​="addExtra()">+ Add Extra</button>
+    </div>
+
+    <div class="total">Total: ₹ <span id="total">0.00</span></div>
+    <button type="submit" class="submit-btn">Submit</button>
+  </form>
+
+  <!-- Live Preview -->
+  <div class="preview-box">
+    <button onclick​="downloadPDF()" class="download-btn" title="Download PDF">⬇️</button>
+    <div id="preview" class="preview-content"></div>
+  </div>
+
+  <!-- Placeholder list -->
+   <!-- Placeholder Reference Table -->
+<div class="preview-box">
+    <h3 style="margin-top: 0;">Available Template Placeholders</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Placeholder</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>{{name}}</code></td>
+          <td>Customer Name</td>
+        </tr>
+        <tr>
+          <td><code>{{number}}</code></td>
+          <td>Customer Number</td>
+        </tr>
+        <tr>
+          <td><code>{{price}}</code></td>
+          <td>Rental Price</td>
+        </tr>
+        <tr>
+          <td><code>{{contact_name}}</code></td>
+          <td>Contact Name</td>
+        </tr>
+        <tr>
+          <td><code>{{contact_number}}</code></td>
+          <td>Contact Number</td>
+        </tr>
+        <tr>
+          <td><code>{{total}}</code></td>
+          <td>Total Amount (including extras)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<​script>
+  const templateForm = document.getElementById('templateForm');
+  const customerForm = document.getElementById('customerForm');
+  const preview = document.getElementById('preview');
+  const extrasContainer = document.getElementById('extrasContainer');
+  const totalSpan = document.getElementById('total');
+  let extras = [];
+
+  function addExtra(name = '', price = '') {
+    const index = extras.length;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'extras-item';
+    wrapper.innerHTML = `
+      <input name="extraName${index}" placeholder="Extra Name" value="${name}" />
+      <input name="extraPrice${index}" type="number" placeholder="Extra Price" value="${price}" />
+      <button type="button" onclick​="removeExtra(this)" class="remove-btn">×</button>
+    `;
+    extrasContainer.appendChild(wrapper);
+    extras.push(wrapper);
+    updatePreview();
+  }
+
+  function removeExtra(button) {
+    const wrapper = button.parentElement;
+    wrapper.remove();
+    extras = extras.filter(e => e !== wrapper);
+    updatePreview();
+  }
+
+  function getFormData() {
+    const templateData = Object.fromEntries(new FormData(templateForm));
+    const customerData = Object.fromEntries(new FormData(customerForm));
+    const extrasData = extras.map((_, i) => ({
+      name: customerForm[`extraName${i}`]?.value || '',
+      price: parseFloat(customerForm[`extraPrice${i}`]?.value || 0)
+    }));
+    const mainPrice = parseFloat(customerData.price) || 0;
+    const extrasTotal = extrasData.reduce((sum, e) => sum + e.price, 0);
+    return {
+      ...templateData,
+      ...customerData,
+      extras: extrasData,
+      total: mainPrice + extrasTotal
+    };
+  }
+
+  function renderTemplate(template, data) {
+    return template
+      .replace(/{{\s*name\s*}}/g, data.name || '')
+      .replace(/{{\s*number\s*}}/g, data.number || '')
+      .replace(/{{\s*price\s*}}/g, `₹${parseFloat(data.price || 0).toFixed(2)}`)
+      .replace(/{{\s*contact_name\s*}}/g, data.contactName || '')
+      .replace(/{{\s*contact_number\s*}}/g, data.contactNumber || '')
+      .replace(/{{\s*total\s*}}/g, `₹${data.total.toFixed(2)}`);
+  }
+
+  function updatePreview() {
+    const data = getFormData();
+    totalSpan.textContent = data.total.toFixed(2);
+
+    let tableRows = '';
+
+    if (data.price) {
+      tableRows += `
+        <tr>
+          <td>Rental Price</td>
+          <td>₹${parseFloat(data.price).toFixed(2)}</td>
+        </tr>`;
+    }
+
+    data.extras
+      .filter(e => e.name && e.price)
+      .forEach(e => {
+        tableRows += `
+          <tr>
+            <td>${e.name}</td>
+            <td>₹${e.price.toFixed(2)}</td>
+          </tr>`;
+      });
+
+    const tableHtml = tableRows
+      ? `<table><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody>${tableRows}</tbody></table>`
+      : '';
+
+    let html = '';
+
+    if (data.greetingMessage) html += `<p>${renderTemplate(data.greetingMessage, data)}</p>`;
+    if (data.body) html += `<p>${renderTemplate(data.body, data)}</p>`;
+    if (data.name || data.number) html += `<p><strong>Name:</strong> ${data.name || ''}${data.number ? ` (${data.number})` : ''}</p>`;
+    if (data.contactName || data.contactNumber) html += `<p><strong>Contact:</strong> ${data.contactName || ''}${data.contactNumber ? ` (${data.contactNumber})` : ''}</p>`;
+    if (tableHtml) html += tableHtml;
+    if (data.total > 0) html += `<p class="total">Total: ₹${data.total.toFixed(2)}</p>`;
+    if (data.notes) html += `<p>${renderTemplate(data.notes, data)}</p>`;
+    if (data.thankyou_notes) html += `<p>${renderTemplate(data.thankyou_notes, data)}</p>`;
+
+    preview.innerHTML = html;
+  }
+
+  function downloadPDF() {
+    const data = getFormData();
+    const element = document.getElementById("preview");
+    const filename = data.name
+      ? `${data.name.replace(/\s+/g, '_').toLowerCase()}.pdf`
+      : 'preview.pdf';
+
+    const opt = {
+      margin: 0.5,
+      filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+  }
+
+  templateForm.addEventListener('input', updatePreview);
+  customerForm.addEventListener('input', updatePreview);
+
+  customerForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    updatePreview();
+  });
+
+  // Initialize
+  addExtra();
+  updatePreview();
+<​/script>
+
+</body>
+</html>
